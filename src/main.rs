@@ -218,8 +218,20 @@ fn handle_key(app: &mut App, key: crossterm::event::KeyEvent) {
         }
     }
 
-    if key.code == KeyCode::Enter && key.modifiers.contains(KeyModifiers::SHIFT) {
+    if key.code == KeyCode::Char('j') && key.modifiers.contains(KeyModifiers::CONTROL) {
         app.insert_char('\n');
+        return;
+    }
+
+    if key.code == KeyCode::Enter || key.code == KeyCode::Char('\n') {
+        let has_mod = key.modifiers.contains(KeyModifiers::SHIFT)
+            || key.modifiers.contains(KeyModifiers::ALT)
+            || key.modifiers.contains(KeyModifiers::CONTROL);
+        if has_mod || key.code == KeyCode::Char('\n') {
+            app.insert_char('\n');
+        } else {
+            app.handle_enter();
+        }
         return;
     }
 
@@ -238,7 +250,6 @@ fn handle_key(app: &mut App, key: crossterm::event::KeyEvent) {
             app.show_help = false;
             app.needs_draw = true;
         }
-        KeyCode::Enter => app.handle_enter(),
         KeyCode::Backspace => app.backspace(),
         KeyCode::Delete => app.delete_forward(),
 
@@ -249,8 +260,12 @@ fn handle_key(app: &mut App, key: crossterm::event::KeyEvent) {
             if app.input.is_empty() { app.scroll_to_bottom(); } else { app.cursor_end(); }
         }
 
-        KeyCode::Up => app.scroll_up(3),
-        KeyCode::Down => app.scroll_down(3),
+        KeyCode::Up => {
+            if app.input.is_empty() { app.scroll_up(3); } else { app.cursor_up(); }
+        }
+        KeyCode::Down => {
+            if app.input.is_empty() { app.scroll_down(3); } else { app.cursor_down(); }
+        }
         KeyCode::PageUp => app.scroll_up(10),
         KeyCode::PageDown => app.scroll_down(10),
 

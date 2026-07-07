@@ -11,6 +11,7 @@ use crate::models::{Message, Role, SessionMessage};
 use crate::state::AppState;
 use crate::theme::Theme;
 
+use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 use ratatui::text::Line as TuiLine;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -66,6 +67,7 @@ pub struct App {
     pub current_session: usize,
     pub input: String,
     pub cursor_byte: usize,
+    pub input_scroll: usize,
     pub scroll_offset: usize,
     pub at_bottom: bool,
     pub is_streaming: bool,
@@ -100,6 +102,7 @@ impl App {
             current_session: 0,
             input: String::new(),
             cursor_byte: 0,
+            input_scroll: 0,
             scroll_offset: 0,
             at_bottom: true,
             is_streaming: false,
@@ -566,6 +569,43 @@ impl App {
         self.needs_draw = true;
     }
 
+    pub fn cursor_up(&mut self) {
+        if self.input.is_empty() {
+            return;
+        }
+        self.cursor_byte = byte_to_char_boundary(&self.input, self.cursor_byte);
+        let prev_nl = self.input[..self.cursor_byte].rfind('\n').map(|i| i + 1).unwrap_or(0);
+        if prev_nl == 0 {
+            return;
+        }
+        let col = self.input[prev_nl..self.cursor_byte].width();
+        let prev_start = self.input[..prev_nl.saturating_sub(1)].rfind('\n').map(|i| i + 1).unwrap_or(0);
+        let prev_line_end = prev_nl.saturating_sub(1);
+        let prev_line = &self.input[prev_start..prev_line_end];
+        let target = nth_width_byte(prev_line, col).saturating_add(prev_start);
+        self.cursor_byte = target.min(prev_line_end);
+        self.needs_draw = true;
+    }
+
+    pub fn cursor_down(&mut self) {
+        if self.input.is_empty() {
+            return;
+        }
+        self.cursor_byte = byte_to_char_boundary(&self.input, self.cursor_byte);
+        let next_nl = self.input[self.cursor_byte..].find('\n').map(|i| self.cursor_byte + i + 1);
+        let next_start = match next_nl {
+            Some(pos) => pos,
+            None => return,
+        };
+        let line_start = self.input[..self.cursor_byte].rfind('\n').map(|i| i + 1).unwrap_or(0);
+        let col = self.input[line_start..self.cursor_byte].width();
+        let next_line_end = self.input[next_start..].find('\n').map(|i| next_start + i).unwrap_or(self.input.len());
+        let next_line = &self.input[next_start..next_line_end];
+        let target = nth_width_byte(next_line, col).saturating_add(next_start);
+        self.cursor_byte = target.min(next_line_end);
+        self.needs_draw = true;
+    }
+
     pub fn scroll_up(&mut self, lines: usize) {
         self.at_bottom = false;
         self.scroll_offset = self.scroll_offset.saturating_sub(lines);
@@ -625,4 +665,16 @@ fn char_to_byte_offset(s: &str, char_count: usize) -> usize {
         .nth(char_count)
         .map(|(i, _)| i)
         .unwrap_or(s.len())
+}
+
+fn nth_width_byte(s: &str, target_width: usize) -> usize {
+    let mut w = 0;
+    for (i, c) in s.char_indices() {
+        let cw = c.width().unwrap_or(0);
+        if w + cw > target_width {
+            return i;
+        }
+        w += cw;
+    }
+    s.len()
 }

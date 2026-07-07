@@ -35,7 +35,7 @@ pub fn render(
         .constraints([
             Constraint::Length(1),
             Constraint::Min(3),
-            Constraint::Length(3),
+            Constraint::Length(5),
         ])
         .split(area);
 
@@ -75,7 +75,7 @@ pub fn render(
         render_chat_area(f, main_chunks[1], app, chat_width, theme);
     }
 
-    render_input(f, main_chunks[2], &app.input, app.cursor_byte, app.is_streaming, theme);
+    render_input(f, main_chunks[2], &app.input, app.cursor_byte, app.is_streaming, theme, &mut app.input_scroll);
 
     if let Some(p) = &app.picker {
         render_picker(f, f.area(), p, theme);
@@ -426,6 +426,7 @@ fn render_input(
     cursor_byte: usize,
     is_streaming: bool,
     theme: &Theme,
+    _input_scroll: &mut usize,
 ) {
     let border_color = if is_streaming {
         theme.system_text
@@ -453,29 +454,78 @@ fn render_input(
         f.render_widget(Paragraph::new(hint).style(Style::default().bg(theme.bg)), inner);
         f.set_cursor_position((inner.x, inner.y));
     } else {
-        let before = &input[..cursor_byte.min(input.len())];
-        let at = input.as_bytes().get(cursor_byte).map(|&b| b as char).unwrap_or(' ');
-        let after = if cursor_byte < input.len() {
-            &input[cursor_byte..]
+        let mut cursor_byte = cursor_byte.min(input.len());
+        while cursor_byte > 0 && !input.is_char_boundary(cursor_byte) {
+            cursor_byte -= 1;
+        }
+        let mut text_lines: Vec<Line> = Vec::new();
+        let mut cursor_row = 0usize;
+        let mut cursor_col = 0u16;
+        let mut byte_offset = 0usize;
+
+        for (row, raw) in input.split('\n').enumerate() {
+            let line_end = byte_offset + raw.len();
+            let nl_len = if line_end < input.len() { 1 } else { 0 };
+
+            if cursor_byte >= byte_offset && cursor_byte <= line_end + nl_len {
+                cursor_row = row;
+                let local = cursor_byte.saturating_sub(byte_offset);
+                let real = local.min(raw.len());
+                let before_local = &raw[..real];
+
+                cursor_col = before_local.width() as u16;
+
+                let cursor_in_middle = local < raw.len();
+                if cursor_in_middle {
+                    let mut local_byte = local;
+                    while local_byte > 0 && !raw.is_char_boundary(local_byte) {
+                        local_byte -= 1;
+                    }
+                    let ch = raw[local_byte..].chars().next().unwrap_or(' ');
+                    let after = &raw[local_byte + ch.len_utf8()..];
+                    let before = &raw[..local_byte];
+                    text_lines.push(Line::from(vec![
+                        Span::styled(before.to_string(), Style::default().fg(theme.input_text)),
+                        Span::styled(ch.to_string(), Style::default().fg(theme.bg).bg(theme.input_text)),
+                        Span::styled(after.to_string(), Style::default().fg(theme.input_text)),
+                    ]));
+                } else {
+                    text_lines.push(Line::from(vec![
+                        Span::styled(raw.to_string(), Style::default().fg(theme.input_text)),
+                    ]));
+                }
+            } else {
+                text_lines.push(Line::from(Span::styled(raw.to_string(), Style::default().fg(theme.input_text))));
+            }
+
+            byte_offset = line_end + nl_len;
+        }
+
+        let inner_rows = inner.height as usize;
+        let scroll = *_input_scroll;
+
+        if cursor_row < scroll {
+            *_input_scroll = cursor_row;
+        } else if cursor_row >= scroll + inner_rows {
+            *_input_scroll = cursor_row.saturating_sub(inner_rows - 1);
+        }
+
+        let updated_scroll = (*_input_scroll).min(text_lines.len().saturating_sub(1));
+        let end = (updated_scroll + inner_rows).min(text_lines.len());
+        let visible: Vec<Line> = if updated_scroll < text_lines.len() {
+            text_lines[updated_scroll..end].to_vec()
         } else {
-            ""
+            text_lines.clone()
         };
-
-        let cursor_x = inner.x + before.width() as u16;
-
-        let before_span = Span::styled(before.to_string(), Style::default().fg(theme.input_text));
-        let cursor_span = Span::styled(
-            at.to_string(),
-            Style::default().fg(theme.bg).bg(theme.input_text),
-        );
-        let after_span = Span::styled(after.to_string(), Style::default().fg(theme.input_text));
+        let cursor_y = inner.y + (cursor_row.saturating_sub(updated_scroll)) as u16;
 
         f.render_widget(
-            Paragraph::new(Line::from(vec![before_span, cursor_span, after_span]))
-                .style(Style::default().bg(theme.bg)),
+            Paragraph::new(Text::from(visible))
+                .style(Style::default().bg(theme.bg))
+                .wrap(Wrap { trim: false }),
             inner,
         );
-        f.set_cursor_position((cursor_x, inner.y));
+        f.set_cursor_position((inner.x + cursor_col, cursor_y));
     }
 }
 

@@ -135,7 +135,7 @@ async fn main() -> anyhow::Result<()> {
 
     enable_raw_mode()?;
     let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen, crossterm::event::EnableMouseCapture)?;
+    execute!(stdout, EnterAlternateScreen, crossterm::event::EnableMouseCapture, crossterm::event::EnableBracketedPaste)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
@@ -146,7 +146,8 @@ async fn main() -> anyhow::Result<()> {
     execute!(
         terminal.backend_mut(),
         LeaveAlternateScreen,
-        crossterm::event::DisableMouseCapture
+        crossterm::event::DisableMouseCapture,
+        crossterm::event::DisableBracketedPaste
     )?;
     terminal.show_cursor()?;
 
@@ -198,6 +199,9 @@ fn run_event_loop(
                 Event::Resize(_, _) => {
                     app.cache_width = 0;
                     app.needs_draw = true;
+                }
+                Event::Paste(data) => {
+                    app.insert_str(&data);
                 }
                 _ => {}
             }

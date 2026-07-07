@@ -516,6 +516,13 @@ impl App {
         self.needs_draw = true;
     }
 
+    pub fn insert_str(&mut self, s: &str) {
+        let pos = byte_to_char_boundary(&self.input, self.cursor_byte);
+        self.input.insert_str(pos, s);
+        self.cursor_byte = pos + s.len();
+        self.needs_draw = true;
+    }
+
     pub fn backspace(&mut self) {
         if self.cursor_byte > 0 {
             let prev = prev_char_boundary(&self.input, self.cursor_byte);

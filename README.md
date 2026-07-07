@@ -71,7 +71,7 @@ Commands without an argument open a picker. Navigate with **↑↓**, select wit
 | Key | Action |
 |-----|--------|
 | `Enter` | Send message or execute command |
-| `Shift+Enter` | Insert newline |
+| `Alt+Enter` | Insert newline |
 | `Backspace` | Delete before cursor |
 | `Delete` | Delete after cursor |
 | `Ctrl+W` | Delete word before cursor |

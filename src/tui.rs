@@ -111,7 +111,7 @@ fn render_help(
         ("/n, /new", "new session"),
         ("/s, /sessions", "pick a session"),
         ("/q, /quit", "exit"),
-        ("/h, /help", "toggle this panel"),
+        ("/h, /?, /help", "toggle this panel"),
     ];
     for (cmd, desc) in commands {
         lines.push(Line::from(vec![

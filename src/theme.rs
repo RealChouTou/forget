@@ -1,6 +1,5 @@
 use ratatui::style::Color;
 
-/// All colors used in the TUI are defined here — no terminal defaults.
 #[derive(Debug, Clone)]
 pub struct Theme {
     pub name: &'static str,
@@ -14,52 +13,56 @@ pub struct Theme {
     pub input_text: Color,
 }
 
+/// ChatGPT dark — near-black bg, white output, subtle blue user accent
 pub const DARK: Theme = Theme {
     name: "dark",
-    bg: Color::Rgb(24, 24, 32),
-    user_text: Color::Rgb(86, 182, 194),
-    ai_text: Color::Rgb(163, 218, 142),
-    system_text: Color::Rgb(229, 181, 103),
-    status_text: Color::Rgb(128, 128, 140),
-    hint_text: Color::Rgb(80, 80, 90),
-    input_border: Color::Rgb(86, 182, 194),
-    input_text: Color::Rgb(220, 220, 230),
+    bg: Color::Rgb(14, 14, 18),
+    user_text: Color::Rgb(220, 225, 235),
+    ai_text: Color::Rgb(236, 238, 245),
+    system_text: Color::Rgb(196, 188, 168),
+    status_text: Color::Rgb(99, 99, 107),
+    hint_text: Color::Rgb(58, 58, 65),
+    input_border: Color::Rgb(99, 99, 107),
+    input_text: Color::Rgb(240, 240, 246),
 };
 
+/// Clean white — pure white bg, near-black output
 pub const LIGHT: Theme = Theme {
     name: "light",
-    bg: Color::Rgb(250, 250, 252),
-    user_text: Color::Rgb(28, 99, 167),
-    ai_text: Color::Rgb(42, 130, 56),
-    system_text: Color::Rgb(172, 93, 24),
-    status_text: Color::Rgb(140, 140, 150),
-    hint_text: Color::Rgb(190, 190, 200),
-    input_border: Color::Rgb(28, 99, 167),
-    input_text: Color::Rgb(30, 30, 40),
+    bg: Color::Rgb(255, 255, 255),
+    user_text: Color::Rgb(45, 45, 52),
+    ai_text: Color::Rgb(25, 25, 32),
+    system_text: Color::Rgb(140, 130, 115),
+    status_text: Color::Rgb(168, 168, 176),
+    hint_text: Color::Rgb(212, 212, 218),
+    input_border: Color::Rgb(168, 168, 176),
+    input_text: Color::Rgb(18, 18, 24),
 };
 
+/// Dracula dark — deep purple bg, crisp white output, pink/green accents
 pub const DRACULA: Theme = Theme {
     name: "dracula",
     bg: Color::Rgb(40, 42, 54),
-    user_text: Color::Rgb(139, 233, 253),
-    ai_text: Color::Rgb(80, 250, 123),
-    system_text: Color::Rgb(241, 250, 140),
-    status_text: Color::Rgb(98, 114, 164),
-    hint_text: Color::Rgb(68, 71, 90),
-    input_border: Color::Rgb(139, 233, 253),
-    input_text: Color::Rgb(248, 248, 242),
+    user_text: Color::Rgb(220, 230, 248),
+    ai_text: Color::Rgb(242, 244, 252),
+    system_text: Color::Rgb(196, 192, 178),
+    status_text: Color::Rgb(108, 112, 126),
+    hint_text: Color::Rgb(62, 64, 76),
+    input_border: Color::Rgb(108, 112, 126),
+    input_text: Color::Rgb(245, 246, 252),
 };
 
+/// Nord dark — navy bg, frost-white output
 pub const NORD: Theme = Theme {
     name: "nord",
-    bg: Color::Rgb(46, 52, 64),
-    user_text: Color::Rgb(136, 192, 208),
-    ai_text: Color::Rgb(163, 190, 140),
-    system_text: Color::Rgb(235, 203, 139),
-    status_text: Color::Rgb(76, 86, 106),
-    hint_text: Color::Rgb(67, 76, 94),
-    input_border: Color::Rgb(136, 192, 208),
-    input_text: Color::Rgb(236, 239, 244),
+    bg: Color::Rgb(30, 33, 40),
+    user_text: Color::Rgb(216, 222, 233),
+    ai_text: Color::Rgb(236, 239, 244),
+    system_text: Color::Rgb(204, 198, 176),
+    status_text: Color::Rgb(94, 100, 114),
+    hint_text: Color::Rgb(54, 58, 68),
+    input_border: Color::Rgb(94, 100, 114),
+    input_text: Color::Rgb(242, 244, 250),
 };
 
 pub const ALL: &[&Theme] = &[&DARK, &LIGHT, &DRACULA, &NORD];

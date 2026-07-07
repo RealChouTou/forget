@@ -233,12 +233,15 @@ fn render_chat_area(
         app.scroll_offset = max_scroll;
     }
     let offset = scroll_offset.min(max_scroll);
-    let visible: Vec<Line> = if offset < lines.len() { lines[offset..].to_vec() } else { vec![] };
+    let end = (offset + area.height as usize).min(lines.len());
+    let visible: Vec<Line> = if offset < end {
+        lines[offset..end].to_vec()
+    } else {
+        vec![]
+    };
 
     let p = Paragraph::new(Text::from(visible))
-        .style(Style::default().bg(theme.bg))
-        .wrap(Wrap { trim: false })
-        .scroll((0, 0));
+        .style(Style::default().bg(theme.bg));
     f.render_widget(p, area);
 }
 

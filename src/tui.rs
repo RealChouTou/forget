@@ -230,6 +230,7 @@ fn render_chat_area(
     let mut scroll_offset = app.scroll_offset;
     if app.at_bottom {
         scroll_offset = max_scroll;
+        app.scroll_offset = max_scroll;
     }
     let offset = scroll_offset.min(max_scroll);
     let visible: Vec<Line> = if offset < lines.len() { lines[offset..].to_vec() } else { vec![] };
@@ -272,7 +273,8 @@ fn build_chat_lines(
                 prefix.to_string(),
                 Style::default().fg(color).add_modifier(Modifier::BOLD),
             )]));
-            for wrapped in textwrap::wrap(&msg.content, width) {
+            let content = crate::latex::latex_to_unicode(&msg.content);
+            for wrapped in textwrap::wrap(&content, width) {
                 new_lines.push(Line::from(vec![Span::styled(
                     format!("  {}", wrapped),
                     Style::default().fg(color),
@@ -290,6 +292,7 @@ fn markdown_to_lines(
     base_color: ratatui::style::Color,
     width: usize,
 ) -> Vec<Line<'static>> {
+    let content = crate::latex::latex_to_unicode(content);
     let mut lines: Vec<Line> = Vec::new();
     let mut current_text = String::new();
     let mut current_spans: Vec<Span> = Vec::new();
@@ -298,7 +301,7 @@ fn markdown_to_lines(
 
     let mut opts = Options::empty();
     opts.insert(Options::ENABLE_STRIKETHROUGH);
-    let parser = pulldown_cmark::Parser::new_ext(content, opts);
+    let parser = pulldown_cmark::Parser::new_ext(&content, opts);
 
     for event in parser {
         match event {

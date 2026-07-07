@@ -456,8 +456,6 @@ impl App {
             return;
         }
 
-        let mut received = false;
-
         loop {
             let token = {
                 let rx = self.stream_rx.as_mut().unwrap();
@@ -467,6 +465,7 @@ impl App {
                     Err(mpsc::error::TryRecvError::Disconnected) => {
                         self.is_streaming = false;
                         self.stream_rx = None;
+                        self.needs_draw = true;
 
                         if let Some(channel) = &self.channel {
                             let session = self.current_session();
@@ -498,14 +497,9 @@ impl App {
                         last_msg.content.push_str(&text);
                         self.needs_draw = true;
                     }
-                    received = true;
                 }
                 None => break,
             }
-        }
-
-        if received && self.scroll_offset == 0 {
-            self.scroll_offset = 0;
         }
     }
 

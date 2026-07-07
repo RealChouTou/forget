@@ -24,6 +24,7 @@ mod app;
 mod backend;
 mod channel;
 mod config;
+mod latex;
 mod models;
 mod state;
 mod theme;
@@ -190,10 +191,19 @@ fn run_event_loop(
                         continue;
                     }
                     handle_key(app, key);
+                    if app.needs_draw && app.is_streaming {
+                        last_draw = now - _frame_min;
+                    }
                 }
                 Event::Mouse(mouse) => match mouse.kind {
-                    MouseEventKind::ScrollUp => app.scroll_up(3),
-                    MouseEventKind::ScrollDown => app.scroll_down(3),
+                    MouseEventKind::ScrollUp => {
+                        app.scroll_up(3);
+                        if app.is_streaming { last_draw = now - _frame_min; }
+                    }
+                    MouseEventKind::ScrollDown => {
+                        app.scroll_down(3);
+                        if app.is_streaming { last_draw = now - _frame_min; }
+                    }
                     _ => {}
                 },
                 Event::Resize(_, _) => {
